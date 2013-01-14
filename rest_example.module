@@ -1,0 +1,117 @@
+<?php
+/**
+ * @file
+ * Module file for rest_example_module.
+ */
+
+
+/**
+ * @defgroup rest_example Example: REST
+ * @ingroup examples
+ * @{
+ * This example demonstrates how a module can POST, GET, DELETE Entities.
+ *
+ * Fun Stuff
+ *
+ */
+
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+
+/**
+ * Implements hook_help().
+ *
+ * Through hook_help(), a module can make documentation available to the user
+ * for the module as a whole or for specific paths. Where the help appears
+ * depends on the $path specified.
+ *
+ * In the first example below, the help text will appear on the simple page
+ * defined in hook_menu below in the region designated for help text.
+ *
+ * In the second example, the text will be available through the module page as
+ * a link beside the module or on the admin help page (admin/help) in the list
+ * of help topics using the name of the module. To specify help in the admin
+ * section use the module name in the path as in the second case below.
+ *
+ * @see hook_help()
+ */
+function rest_example_help($path, $arg) {
+  switch ($path) {
+    case 'examples/rest_examples/starthere':
+      // Help text for the simple page registered for this path.
+      return t('This is help text for the rest start here page.');
+
+    case 'admin/help#rest_example':
+      // Help text for the admin section, using the module name in the path.
+      return t('This is help text created in the rest example\'s second case.');
+  }
+}
+
+
+/**
+ * Implements hook_menu().
+ *
+ * @see hook_menu()
+ * @see menu_example
+ */
+function  rest_example_menu() {
+  $items['examples/rest_example/starthere'] = array(
+    'title' => 'RESTful Example',
+    'page callback' => 'rest_example_description',
+    'access callback' => TRUE,
+    'expanded' => TRUE,
+  );
+
+  $items['examples/rest_example/action/%/%'] = array(
+    'title' => 'RESTful Example',
+    'page callback' => 'rest_example_create',
+    'page arguments' => array(2,3),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+ 
+ 
+function rest_example_description(){
+  $list[] = l('Create a Node', 'examples/rest_example/action/create/page');
+
+  $render_array['rest_example_description'] = array(
+    '#theme' => 'item_list',  // The theme function to apply to the #items
+    '#items' => $list,  // The list itself.
+    '#title' => t('RESTful Examples'),
+  );
+  
+  return $render_array;
+}
+
+
+/**
+ * Example of actions to take on Entities
+ */
+ 
+function rest_example_create($action, $type){ 
+  global $user;
+  $serializer = drupal_container()->get('serializer');
+  // @todo once EntityNG is implemented for other entity types test all other
+  // entity types here as well.
+  $type = 'page'; 
+  $langcode = module_invoke('language', 'get_default_langcode', 'node', $type);
+  $node = entity_create('node', array(
+    'uid' => $user->uid, 
+    'name' => (isset($user->name) ? $user->name : ''), 
+    'type' => $type, 
+    'title' => t('Test Node'),
+    'langcode' => $langcode ? $langcode : language_default()->langcode,
+  ));  
+  $serialized = $serializer->serialize($node, 'drupal_jsonld');  
+  print_r($serialized);
+  
+  //@todo: Set page to allow this or my own node type
+  //drupal_http_request('entity/' . $type, $options = array('headers' => array('application' => 'vnd.drupal.ld+json'), 'method' => 'POST', 'data' => $serialized));
+  watchdog('Line X', print_r($node, 1));  
+  return array('#markup' => t('node created'));
+}
+
+
+
+

@@ -1,0 +1,4 @@
+name = RESTful example
+description = An example module showing how to use RESTful API.
+package = Example modules
+core = 8.x
